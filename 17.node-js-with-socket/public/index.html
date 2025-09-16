@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<div id="user-list">
+			<h3>Online users</h3>
+			<ul id="users"></ul>
+			<div id="chat"></div>
+			<form
+				action=""
+				id="message-form">
+				<input
+					type="text"
+					required
+					id="message-input"
+					placeholder="Enter your message" />
+				<button>Send</button>
+			</form>
+		</div>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			const socket = io();
+
+			const chat = document.getElementById("chat");
+			const userList = document.getElementById("users");
+			const messageForm = document.getElementById("message-form");
+			const messageInput = document.getElementById("message-input");
+
+			const username = prompt("Enter your username");
+
+			socket.emit("join", username);
+
+			socket.on("userJoined", (user) => {
+				addMessage(`${user} has joined the chat`);
+			});
+
+			socket.on("usersList", (users) => {
+				userList.innerHTML = users.map((user) => `<li>${user}</li>`).join("");
+			});
+
+            socket.on("chatMessage", (message)=>{
+                addMessage(`${message.username}: ${message.text}`)
+            })
+
+			function addMessage(input) {
+				messageElement = document.createElement("div");
+				messageElement.textContent = input;
+				chat.appendChild(messageElement);
+
+				chat.scrollTo = chat.scrollHeight;
+
+				socket.emit("chatMessage");
+			}
+
+			messageForm.addEventListener("submit", (event) => {
+				event.preventDefault();
+
+				const extactMessage = messageInput.value.trim();
+
+				if (extactMessage) {
+					socket.emit("chatMessage", {
+						username,
+						text: extactMessage,
+					});
+					messageInput.value = "";
+				}
+			});
+		</script>
+	</body>
+</html>
